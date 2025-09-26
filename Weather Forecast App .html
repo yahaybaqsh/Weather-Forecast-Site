@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            transition: background-color 0.5s ease, color 0.3s ease;
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .weather-app {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            width: 300px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .search-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            background: white;
+            color: #0984e3;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .search-btn:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+
+        .unit-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .unit-toggle label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .unit-toggle input {
+            margin-right: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .weather-container {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .weather-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .current-weather {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .location {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .date {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .weather-icon {
+            font-size: 4rem;
+            margin: 20px 0;
+        }
+
+        .temperature {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .weather-description {
+            font-size: 1.2rem;
+            text-transform: capitalize;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .detail-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .forecast {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .forecast h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .forecast-days {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .forecast-day {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .forecast-day:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.2);
+        }
+
+        .forecast-date {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .forecast-icon {
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+
+        .forecast-temp {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .error {
+            background: rgba(255,0,0,0.2);
+            border: 2px solid rgba(255,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .gif-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .weather-gif {
+            max-width: 300px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        /* Weather-specific backgrounds */
+        .weather-clear {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+        }
+
+        .weather-clouds {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+        }
+
+        .weather-rain {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .weather-thunderstorm {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .weather-snow {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .weather-mist {
+            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+        }
+    </style>
+</head>
+<body>
+    <div class="weather-app">
+        <div class="header">
+            <h1><i class="fas fa-cloud-sun"></i> Weather Forecast</h1>
+            <p>Get accurate weather information for any location</p>
+        </div>
+
+        <div class="search-container">
+            <form class="search-form" id="searchForm">
+                <input type="text" class="search-input" id="locationInput" placeholder="Enter city name..." required>
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+            <div class="unit-toggle">
+                <input type="radio" id="celsius" name="unit" value="metric" checked>
+                <label for="celsius">°C</label>
+                <input type="radio" id="fahrenheit" name="unit" value="imperial">
+                <label for="fahrenheit">°F</label>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>Fetching weather data...</p>
+        </div>
+
+        <div class="error" id="error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p id="errorMessage">Location not found. Please try again.</p>
+        </div>
+
+        <div class="gif-container" id="gifContainer" style="display: none;">
+            <img id="weatherGif" class="weather-gif" alt="Weather GIF">
+        </div>
+
+        <div class="weather-container" id="weatherContainer">
+            <div class="current-weather">
+                <div class="location" id="location">New York, NY</div>
+                <div class="date" id="date">Monday, January 1, 2024</div>
+                <div class="weather-icon" id="weatherIcon">
+                    <i class="fas fa-sun"></i>
+                </div>
+                <div class="temperature" id="temperature">22°C</div>
+                <div class="weather-description" id="description">Sunny</div>
+                
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <span class="detail-value" id="humidity">65%</span>
+                        <span class="detail-label">Humidity</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-value" id="windSpeed">12 km/h</span>
+                        <span class="detail-label">Wind Speed</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-value" id="pressure">1013 hPa</span>
+                        <span class="detail-label">Pressure</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-value" id="feelsLike">24°C</span>
+                        <span class="detail-label">Feels Like</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="forecast">
+                <h3>5-Day Forecast</h3>
+                <div class="forecast-days" id="forecastDays">
+                    <!-- Forecast items will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Visual Crossing API Key (free tier - safe to expose for this project)
+        const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your actual API key
+        const BASE_URL = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/';
+        
+        // DOM Elements
+        const searchForm = document.getElementById('searchForm');
+        const locationInput = document.getElementById('locationInput');
+        const unitToggle = document.querySelector('input[name="unit"]');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const errorMessage = document.getElementById('errorMessage');
+        const weatherContainer = document.getElementById('weatherContainer');
+        const gifContainer = document.getElementById('gifContainer');
+        const weatherGif = document.getElementById('weatherGif');
+
+        // Element references for current weather
+        const locationEl = document.getElementById('location');
+        const dateEl = document.getElementById('date');
+        const weatherIconEl = document.getElementById('weatherIcon');
+        const temperatureEl = document.getElementById('temperature');
+        const descriptionEl = document.getElementById('description');
+        const humidityEl = document.getElementById('humidity');
+        const windSpeedEl = document.getElementById('windSpeed');
+        const pressureEl = document.getElementById('pressure');
+        const feelsLikeEl = document.getElementById('feelsLike');
+        const forecastDaysEl = document.getElementById('forecastDays');
+
+        // Weather icon mapping
+        const weatherIcons = {
+            'clear-day': 'fa-sun',
+            'clear-night': 'fa-moon',
+            'rain': 'fa-cloud-rain',
+            'snow': 'fa-snowflake',
+            'sleet': 'fa-cloud-sleet',
+            'wind': 'fa-wind',
+            'fog': 'fa-smog',
+            'cloudy': 'fa-cloud',
+            'partly-cloudy-day': 'fa-cloud-sun',
+            'partly-cloudy-night': 'fa-cloud-moon',
+            'thunderstorm': 'fa-bolt',
+            'hail': 'fa-cloud-hail'
+        };
+
+        // Weather condition to background class mapping
+        const weatherBackgrounds = {
+            'clear': 'weather-clear',
+            'clouds': 'weather-clouds',
+            'rain': 'weather-rain',
+            'drizzle': 'weather-rain',
+            'thunderstorm': 'weather-thunderstorm',
+            'snow': 'weather-snow',
+            'mist': 'weather-mist',
+            'fog': 'weather-mist',
+            'haze': 'weather-mist'
+        };
+
+        // Get weather data from API
+        async function getWeatherData(location, unit = 'metric') {
+            try {
+                const unitParam = unit === 'metric' ? 'metric' : 'us';
+                const url = `${BASE_URL}${encodeURIComponent(location)}?key=${API_KEY}&unitGroup=${unitParam}&include=days&elements=datetime,temp,feelslike,humidity,windspeed,pressure,conditions,icon`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    if (response.status === 400) {
+                        throw new Error('Location not found. Please check the spelling and try again.');
+                    } else if (response.status === 401) {
+                        throw new Error('Invalid API key. Please check your API key.');
+                    } else {
+                        throw new Error(`Weather data not available. Status: ${response.status}`);
+                    }
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Get weather GIF from Giphy
+        async function getWeatherGif(weatherCondition) {
+            try {
+                const giphyApiKey = 'YOUR_GIPHY_API_KEY'; // You can get a free key from Giphy
+                const query = weatherCondition.toLowerCase().replace(/\s+/g, '-');
+                const url = `https://api.giphy.com/v1/gifs/search?api_key=${giphyApiKey}&q=${query}&limit=1`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    return data.data[0].images.original.url;
+                }
+                return null;
+            } catch (error) {
+                console.log('Giphy API error:', error);
+                return null;
+            }
+        }
+
+        // Process and display weather data
+        function displayWeatherData(data, unit) {
+            const current = data.days[0];
+            const isMetric = unit === 'metric';
+            
+            // Update current weather
+            locationEl.textContent = `${data.resolvedAddress}`;
+            dateEl.textContent = new Date(current.datetime).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Set weather icon
+            const iconClass = weatherIcons[current.icon] || 'fa-cloud';
+            weatherIconEl.innerHTML = `<i class="fas ${iconClass}"></i>`;
+            
+            // Set temperature
+            const temp = isMetric ? Math.round(current.temp) : Math.round(current.temp);
+            const tempUnit = isMetric ? '°C' : '°F';
+            temperatureEl.textContent = `${temp}${tempUnit}`;
+            
+            // Set description
+            descriptionEl.textContent = current.conditions.toLowerCase();
+            
+            // Set weather details
+            humidityEl.textContent = `${Math.round(current.humidity)}%`;
+            windSpeedEl.textContent = isMetric 
+                ? `${Math.round(current.windspeed)} km/h` 
+                : `${Math.round(current.windspeed)} mph`;
+            pressureEl.textContent = `${Math.round(current.pressure)} hPa`;
+            const feelsLikeTemp = isMetric ? Math.round(current.feelslike) : Math.round(current.feelslike);
+            feelsLikeEl.textContent = `${feelsLikeTemp}${tempUnit}`;
+            
+            // Update forecast
+            updateForecast(data.days.slice(1, 6), unit);
+            
+            // Set background based on weather
+            setWeatherBackground(current.conditions);
+            
+            // Try to get weather GIF
+            getWeatherGif(current.conditions).then(gifUrl => {
+                if (gifUrl) {
+                    weatherGif.src = gifUrl;
+                    gifContainer.style.display = 'block';
+                } else {
+                    gifContainer.style.display = 'none';
+                }
+            });
+        }
+
+        // Update 5-day forecast
+        function updateForecast(forecastDays, unit) {
+            forecastDaysEl.innerHTML = '';
+            const isMetric = unit === 'metric';
+            
+            forecastDays.forEach(day => {
+                const date = new Date(day.datetime);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const temp = isMetric ? Math.round(day.temp) : Math.round(day.temp);
+                const tempUnit = isMetric ? '°C' : '°F';
+                const iconClass = weatherIcons[day.icon] || 'fa-cloud';
+                
+                const forecastItem = document.createElement('div');
+                forecastItem.className = 'forecast-day';
+                forecastItem.innerHTML = `
+                    <div class="forecast-date">${dayName}</div>
+                    <div class="forecast-icon">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="forecast-temp">${temp}${tempUnit}</div>
+                `;
+                
+                forecastDaysEl.appendChild(forecastItem);
+            });
+        }
+
+        // Set background based on weather conditions
+        function setWeatherBackground(conditions) {
+            const condition = conditions.toLowerCase();
+            let backgroundClass = 'weather-clear'; // default
+            
+            if (condition.includes('clear')) {
+                backgroundClass = 'weather-clear';
+            } else if (condition.includes('cloud') || condition.includes('overcast')) {
+                backgroundClass = 'weather-clouds';
+            } else if (condition.includes('rain') || condition.includes('drizzle')) {
+                backgroundClass = 'weather-rain';
+            } else if (condition.includes('thunder') || condition.includes('storm')) {
+                backgroundClass = 'weather-thunderstorm';
+            } else if (condition.includes('snow') || condition.includes('sleet')) {
+                backgroundClass = 'weather-snow';
+            } else if (condition.includes('mist') || condition.includes('fog') || condition.includes('haze')) {
+                backgroundClass = 'weather-mist';
+            }
+            
+            document.body.className = backgroundClass;
+        }
+
+        // Show loading state
+        function showLoading() {
+            loading.style.display = 'block';
+            weatherContainer.style.display = 'none';
+            error.style.display = 'none';
+            gifContainer.style.display = 'none';
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            error.style.display = 'block';
+            weatherContainer.style.display = 'none';
+            gifContainer.style.display = 'none';
+        }
+
+        // Show weather data
+        function showWeather() {
+            weatherContainer.style.display = 'grid';
+            error.style.display = 'none';
+        }
+
+        // Handle form submission
+        async function handleSearch(e) {
+            e.preventDefault();
+            
+            const location = locationInput.value.trim();
+            const unit = document.querySelector('input[name="unit"]:checked').value;
+            
+            if (!location) {
+                showError('Please enter a location');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const weatherData = await getWeatherData(location, unit);
+                displayWeatherData(weatherData, unit);
+                showWeather();
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                showError(error.message || 'Failed to fetch weather data. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Event listeners
+        searchForm.addEventListener('submit', handleSearch);
+
+        // Add event listeners to unit toggle
+        document.querySelectorAll('input[name="unit"]').forEach(radio => {
+            radio.addEventListener('change', async () => {
+                const location = locationEl.textContent.split(',')[0];
+                if (location && location !== 'New York, NY') {
+                    const unit = radio.value;
+                    showLoading();
+                    try {
+                        const weatherData = await getWeatherData(location, unit);
+                        displayWeatherData(weatherData, unit);
+                        showWeather();
+                    } catch (error) {
+                        showError(error.message || 'Failed to update temperature unit.');
+                    } finally {
+                        hideLoading();
+                    }
+                }
+            });
+        });
+
+        // Load default weather for demo (optional)
+        // Uncomment the following lines to load default weather on page load
+        /*
+        window.addEventListener('load', async () => {
+            showLoading();
+            try {
+                const weatherData = await getWeatherData('New York', 'metric');
+                displayWeatherData(weatherData, 'metric');
+                showWeather();
+            } catch (error) {
+                console.error('Default weather load error:', error);
+            } finally {
+                hideLoading();
+            }
+        });
+        */
+    </script>
+</body>
+</html>
